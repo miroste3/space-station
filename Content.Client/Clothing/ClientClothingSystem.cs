@@ -113,7 +113,7 @@ public sealed class ClientClothingSystem : ClothingSystem
         if (layers == null && !item.ClothingVisuals.TryGetValue(args.Slot, out layers))
         {
             // No generic data either. Attempt to generate defaults from the item's RSI & item-prefixes
-            if (!TryGetDefaultVisuals(uid, item, args.Slot, inventory.SpeciesId, out layers))
+            if (!TryGetDefaultVisuals(uid, item, args.Slot, inventory.SpeciesId, args.Equipee, out layers))
                 return;
         }
 
@@ -141,6 +141,7 @@ public sealed class ClientClothingSystem : ClothingSystem
     ///     Useful for lazily adding clothing sprites without modifying yaml. And for backwards compatibility.
     /// </remarks>
     private bool TryGetDefaultVisuals(EntityUid uid, ClothingComponent clothing, string slot, string? speciesId,
+        EntityUid equipee,
         [NotNullWhen(true)] out List<PrototypeLayerData>? layers)
     {
         layers = null;
@@ -167,6 +168,13 @@ public sealed class ClientClothingSystem : ClothingSystem
 
         if (clothing.EquippedState != null)
             state = $"{clothing.EquippedState}";
+
+// SFE-Changes start
+        if (TryComp(equipee, out HumanoidAppearanceComponent? humanoid) && 
+            humanoid.Sex == Sex.Female && 
+            rsi.TryGetState($"{state}-female", out _))
+            state = $"{state}-female";
+// SFE-Changes end
 
         // species specific
         if (speciesId != null && rsi.TryGetState($"{state}-{speciesId}", out _))
